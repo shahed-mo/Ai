@@ -1,16 +1,16 @@
+from flask import Flask, Response, render_template_string
 import cv2
 import requests
 from ultralytics import YOLO
 import time
+import nest_asyncio
+import os
 
-# تحميل النموذج المدرب
-model = YOLO(r"E:\Ai\best.pt")
+nest_asyncio.apply()
+app = Flask(__name__)
 
-# IP لكاميرا الموبايل (مثال IP Webcam app)
-ip_camera_url = "http://192.168.1.3:8080/video"  # غيّره حسب شبكتك
-
-# رابط API للباك اند
-api_url = "http://farmsmanagement.runasp.net/api/Notifiactions/CreateNotification"
+# تحميل النموذج
+model = YOLO("best.pt")  # لازم ترفع الملف ده مع المشروع
 
 # ترجمة الفئات
 label_translation = {
@@ -19,53 +19,86 @@ label_translation = {
     "Healthy": "سليمة"
 }
 
-# كاش لمنع تكرار نفس الإشعار
+api_url = "http://farmsmanagement.runasp.net/api/Notifiactions/CreateNotification"
 last_label = None
 last_sent_time = 0
 
-# افتح الكاميرا
-cap = cv2.VideoCapture(ip_camera_url)
+def generate_frames():
+    global last_label, last_sent_time
+    ip_camera_url = "http://<Tailscale_or_public_IP>:8080/video"  # عدّلي هنا
+    cap = cv2.VideoCapture(ip_camera_url)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("❌ فشل في الاتصال بالكاميرا")
-        break
+    while True:
+        success, frame = cap.read()
+        if not success:
+            continue
 
-    results = model(frame)
+        frame = cv2.resize(frame, (640, 480))
 
-    for result in results:
-        boxes = result.boxes.xyxy
-        scores = result.boxes.conf
-        classes = result.boxes.cls
+        try:
+            results = model(frame, verbose=False)
+        except Exception as e:
+            print(f"❌ YOLO Error: {e}")
+            continue
 
-        for i in range(len(boxes)):
-            conf = float(scores[i])
-            class_id = int(classes[i])
-            label = model.names[class_id]
-            arabic_label = label_translation.get(label, label)
+        for result in results:
+            boxes = result.boxes.xyxy.cpu().numpy()
+            scores = result.boxes.conf.cpu().numpy()
+            classes = result.boxes.cls.cpu().numpy()
 
-            print(f"تم اكتشاف: {arabic_label} بثقة: {conf:.2f}")
+            for i in range(len(boxes)):
+                conf = float(scores[i])
+                if conf < 0.75:
+                    continue
 
-            # إرسال إشعار في حالة ثقة عالية وتغيير في النوع
-            if conf > 0.6 and (label != last_label or time.time() - last_sent_time > 10):
-                if label in label_translation:
-                    body = f"فرخة {arabic_label}"
-                    data = {
-                        "body": body,
-                        "userId": 24,
-                        "barnId": 3,
-                        "isRead": False
-                    }
-                    try:
-                        response = requests.post(api_url, json=data)
-                        print(f"🚨 تم إرسال إشعار: {body} ✅")
-                        print(response.json())
-                        last_label = label
-                        last_sent_time = time.time()
-                    except Exception as e:
-                        print(f"❌ خطأ في الإرسال: {e}")
+                x1, y1, x2, y2 = boxes[i].astype(int)
+                class_id = int(classes[i])
+                label = model.names[class_id]
+                arabic_label = label_translation.get(label, label)
 
-    time.sleep(0.5)  # تقليل الضغط
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(frame, f"{arabic_label} ({conf:.2f})",
+                            (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.7, (0, 255, 0), 2)
 
-cap.release()
+                if label in ["Sick", "Dead"]:
+                    if (label != last_label or time.time() - last_sent_time > 10):
+                        data = {
+                            "body": f"فرخة {arabic_label}",
+                            "userId": 24,
+                            "barnId": 3,
+                            "isRead": False
+                        }
+                        try:
+                            requests.post(api_url, json=data)
+                            print(f"🚨 إشعار: {data['body']}")
+                            last_label = label
+                            last_sent_time = time.time()
+                        except Exception as e:
+                            print(f"❌ خطأ إرسال الإشعار: {e}")
+
+        ret, buffer = cv2.imencode('.jpg', frame)
+        if not ret:
+            continue
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+@app.route('/')
+def index():
+    return render_template_string('''
+        <html>
+        <head><title>بث مباشر مع كشف الدواجن</title></head>
+        <body>
+            <h1>🐔 بث مباشر لكشف حالة الدواجن</h1>
+            <img src="{{ url_for('video') }}" width="80%">
+        </body>
+        </html>
+    ''')
+
+@app.route('/video')
+def video():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))

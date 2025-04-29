@@ -1,5 +1,5 @@
-torch
-opencv-python
+flask
 requests
-numpy
+opencv-python-headless
 ultralytics
+nest_asyncio
