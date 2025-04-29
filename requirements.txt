@@ -1,5 +1,6 @@
 flask
 requests
-opencv-python-headless
 ultralytics
+opencv-python-headless
+gunicorn
 nest_asyncio
