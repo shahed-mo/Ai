@@ -1,6 +1,6 @@
-flask
-requests
 ultralytics
-opencv-contrib-python-headless
-gunicorn
-nest_asyncio
+opencv-python-headless
+fastapi
+uvicorn
+requests
+python-multipart
