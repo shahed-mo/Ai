@@ -19,8 +19,10 @@ def detect():
     if not stream_url:
         return jsonify({"error": "يرجى توفير رابط الكاميرا (stream_url)"}), 400
 
-    # التقاط أول إطار من الفيديو
+    # فتح الفيديو باستخدام الرابط المقدم
     cap = cv2.VideoCapture(stream_url)
+
+    # محاولة التقاط أول إطار من الفيديو
     ret, frame = cap.read()
     cap.release()
 
@@ -61,3 +63,6 @@ def detect():
         print(f"حدث خطأ أثناء إرسال البيانات للباك إند: {e}")
 
     return jsonify({"detections": detections})
+
+if __name__ == "__main__":
+    app.run(debug=True)
