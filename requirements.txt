@@ -1,6 +1,6 @@
 flask
 requests
 ultralytics
-opencv-python-headless
+opencv-contrib-python-headless
 gunicorn
 nest_asyncio
