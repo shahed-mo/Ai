@@ -2,26 +2,12 @@
 languages = ["python"]
 
 [phases.setup]
-# تثبيت بايثون + pip + مكتبات ضرورية
-nixpkgs = [
-  "libGL", 
-  "gcc", 
-  "ffmpeg", 
-  "python312Full", 
-  "python312Packages.pip", 
-  "python312Packages.setuptools", 
-  "python312Packages.wheel", 
-  "python312Packages.opencv4"
-]
+nixpkgs = ["python312.withPackages (ps: with ps; [pip setuptools wheel opencv4])", "libGL", "ffmpeg", "gcc"]
 
 [phases.install]
-# تثبيت pip وتحديثه وتثبيت متطلبات المشروع
 cmds = [
-  "python3.12 -m ensurepip",
-  "python3.12 -m pip install --upgrade pip",
-  "python3.12 -m pip install -r requirements.txt"
+  "pip install -r requirements.txt"
 ]
 
 [start]
-# أمر تشغيل التطبيق بـ Uvicorn (يقرأ من app.py اللي فيه FastAPI)
 cmd = "uvicorn app:app --host=0.0.0.0 --port=${PORT}"
