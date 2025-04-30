@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 model = YOLO("best.pt")
 
 # روابط
-stream_url = "https://0c4a-154-183-138-118.ngrok-free.app/video"
+stream_url = "https://ralph-clip-extras-acceptance.trycloudflare.com"  # رابط cloudflared
 backend_url = "http://farmsmanagement.runasp.net/api/Notifiactions/CreateNotification"
 headers = {'Content-Type': 'application/json'}
 
