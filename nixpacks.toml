@@ -1,2 +1,2 @@
 [phases.setup]
-nixpkgs = ["libGL", "gcc", "python312"]
+nixpkgs = ["libGL" "gcc" "python312" "uvicorn"]
