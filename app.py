@@ -10,11 +10,9 @@ app = FastAPI()
 # إعداد اللوجات
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# تحميل الموديل
 model = YOLO("best.pt")
 
-# روابط
-stream_url = "https://ralph-clip-extras-acceptance.trycloudflare.com"  # رابط cloudflared
+stream_url = "https://ralph-clip-extras-acceptance.trycloudflare.com"
 backend_url = "http://farmsmanagement.runasp.net/api/Notifiactions/CreateNotification"
 headers = {'Content-Type': 'application/json'}
 
@@ -33,7 +31,7 @@ async def detect_and_notify():
                     logging.warning("⚠️ Lost connection to the camera stream. Reconnecting...")
                     cap.release()
                     await asyncio.sleep(2)
-                    break  # نطلع من اللوب الداخلي ونحاول نعيد فتح الكاميرا
+                    break
 
                 results = model.predict(frame)
                 names = model.names
@@ -63,7 +61,7 @@ async def detect_and_notify():
                     except Exception as e:
                         logging.error(f"❌ Error sending to backend: {e}")
 
-                await asyncio.sleep(5)  # كل 5 ثواني
+                await asyncio.sleep(5)
 
         except Exception as e:
             logging.error(f"Unexpected error: {e}")
