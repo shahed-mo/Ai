@@ -1,5 +1,6 @@
-fastapi
-uvicorn[standard]
-httpx
-opencv-python-headless
 ultralytics
+fastapi
+uvicorn
+python-multipart
+opencv-python-headless
+requests
