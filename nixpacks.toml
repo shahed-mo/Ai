@@ -2,13 +2,12 @@
 languages = ["python"]
 
 [phases.setup]
-nixpkgs = ["libGL", "gcc", "python312Full"]
+nixpkgs = ["libGL", "gcc", "python312Full", "python312Packages.pip"]
 
 [phases.install]
 cmds = [
-  "python3.12 -m ensurepip",
-  "python3.12 -m pip install --upgrade pip",
-  "python3.12 -m pip install -r requirements.txt"
+  "pip install --upgrade pip",
+  "pip install -r requirements.txt"
 ]
 
 [start]
