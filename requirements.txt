@@ -1,6 +1,5 @@
-ultralytics
-opencv-python-headless
 fastapi
 uvicorn
-requests
-python-multipart
+opencv-python
+ultralytics
+httpx
