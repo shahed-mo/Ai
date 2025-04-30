@@ -2,10 +2,16 @@
 languages = ["python"]
 
 [phases.setup]
-nixpkgs = ["python312.withPackages (ps: with ps; [pip setuptools wheel opencv4])", "libGL", "ffmpeg", "gcc"]
+nixpkgs = [
+  "libGL",
+  "gcc",
+  "ffmpeg",  # لو كنتي بتستخدمي الفيديو
+  "python312Packages.pip"  # أهم حاجة تضيفي pip
+]
 
 [phases.install]
 cmds = [
+  "pip install --upgrade pip",
   "pip install -r requirements.txt"
 ]
 
